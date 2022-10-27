@@ -6,12 +6,13 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_map/flutter_map.dart';
-import 'package:flutter_map_location_marker/flutter_map_location_marker.dart';
+// import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:location/location.dart';
 // import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 // import 'package:otlob/screens/sing_in.dart';
@@ -21,7 +22,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:pinput/pinput.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:timer_count_down/timer_count_down.dart';
-import 'package:latlong2/latlong.dart';
+// import 'package:latlong2/latlong.dart';
 
 import '../../../value/colors.dart';
 import '../../../widget/app_style_text.dart';
@@ -52,8 +53,8 @@ class _HomeState extends State<Home> {
     ..onTap = () => onTapRecognizer();
   bool isSwitched = true;
 
-  late StreamController<LocationMarkerPosition> positionStream;
-  late StreamSubscription<LocationMarkerPosition> streamSubscription;
+  // late StreamController<LocationMarkerPosition> positionStream;
+  // late StreamSubscription<LocationMarkerPosition> streamSubscription;
 
   void onTapRecognizer() {
     Navigator.push(
@@ -77,7 +78,10 @@ class _HomeState extends State<Home> {
   //   radius: 4000,
   //
   // )]);
-  LatLng latLng = LatLng(31.524574924915523, 34.448129281505175);
+  // LatLng latLng = LatLng(31.524574924915523, 34.448129281505175);
+  final Completer<GoogleMapController> _controller = Completer();
+  static const LatLng sourceLocation = LatLng(37.33500926, -122.03272188);
+  static const LatLng destination = LatLng(37.33429383, -122.06600055);
 
   // static final CameraPosition _kLake = CameraPosition(
   //     bearing: 192.8334901395799,
@@ -102,21 +106,50 @@ class _HomeState extends State<Home> {
     ),
   );
 
+  LocationData? currentLocation;
+  void getCurrentLocation() async {
+    Location location = Location();
+    location.getLocation().then(
+      (location) {
+        currentLocation = location;
+      },
+    );
+    GoogleMapController googleMapController = await _controller.future;
+    location.onLocationChanged.listen(
+      (newLoc) {
+        currentLocation = newLoc;
+        googleMapController.animateCamera(
+          CameraUpdate.newCameraPosition(
+            CameraPosition(
+              zoom: 13.5,
+              target: LatLng(
+                newLoc.latitude!,
+                newLoc.longitude!,
+              ),
+            ),
+          ),
+        );
+        setState(() {});
+      },
+    );
+  }
+
   @override
   void initState() {
     // TODO: implement initState
 
-    positionStream = StreamController();
+    // positionStream = StreamController();
 
     SystemChrome.setSystemUIOverlayStyle(
         SystemUiOverlayStyle(statusBarColor: AppColors.appColor));
+    getCurrentLocation();
     super.initState();
     user = _auth.currentUser;
   }
 
   @override
   void dispose() {
-    positionStream.close();
+    // positionStream.close();
 
     // TODO: implement dispose
     SystemChrome.setSystemUIOverlayStyle(
@@ -349,68 +382,105 @@ class _HomeState extends State<Home> {
                   height: 122.h,
                   decoration:
                       BoxDecoration(borderRadius: BorderRadius.circular(8.r)),
-                  child: FlutterMap(
-                    options: MapOptions(
-                      center: latLng,
-                      zoom: 18,
-                      maxZoom: 26,
-                      plugins: [
-                        LocationMarkerPlugin(), // <-- add plugin here
-                      ],
-                    ),
-                    layers: [
-                      TileLayerOptions(
-                        urlTemplate:
-                            'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-                        subdomains: ['a', 'b', 'c'],
-                        userAgentPackageName:
-                            'net.tlserver6y.flutter_map_location_marker.example',
-                      ),
-                      LocationMarkerLayerOptions(
-                        positionStream: positionStream.stream,
-                        marker: const DefaultLocationMarker(
-                          color: Colors.green,
-                          child: Icon(
-                            Icons.person,
-                            color: Colors.white,
+                  child: currentLocation == null
+                      ? const Center(child: Text("Loading"))
+                      : GoogleMap(
+                          myLocationEnabled: true,
+                          initialCameraPosition: CameraPosition(
+                            target: LatLng(currentLocation!.latitude!,
+                                currentLocation!.longitude!),
+                            zoom: 13.5,
                           ),
+                          markers: {
+                            Marker(
+                              markerId: const MarkerId("currentLocation"),
+                              position: LatLng(currentLocation!.latitude!,
+                                  currentLocation!.longitude!),
+                            ),
+                            //  Marker(
+                            //   markerId: MarkerId("source"),
+                            //   position: latLng,
+                            // ),
+                            // const Marker(
+                            //   markerId: MarkerId("destination"),
+                            //   position: destination,
+                            // ),
+                          },
+                          onMapCreated: (mapController) {
+                            // _controller.complete(mapController); //  Marker(
+                            //   markerId: MarkerId("source"),
+                            //   position: latLng,
+                            // ),
+                            // const Marker(
+                            //   markerId: MarkerId("destination"),
+                            //   position: destination,
+                            // ),
+                          },
                         ),
-                        markerSize: const Size(40, 40),
-                        accuracyCircleColor: Colors.green.withOpacity(0.1),
-                        headingSectorColor: Colors.green.withOpacity(0.8),
-                        headingSectorRadius: 120,
-                        moveAnimationDuration: Duration.zero,
-                      ),
-                      // Align(
-                      //     alignment: Alignment.bottomCenter,
-                      //     child: Container(
-                      //       color: Theme.of(context).scaffoldBackgroundColor,
-                      //       padding: const EdgeInsets.all(8),
-                      //       child: Row(
-                      //         mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      //         children: [
-                      //           const Text("Distance Filter:"),
-                      //           ToggleButtons(
-                      //             isSelected: List.generate(
-                      //               distanceFilters.length,
-                      //               (index) => index == _selectedIndex,
-                      //               growable: false,
-                      //             ),
-                      //             onPressed: (index) {
-                      //               setState(() => _selectedIndex = index);
-                      //               streamSubscription.cancel();
-                      //               _subscriptPositionStream();
-                      //             },
-                      //             children: distanceFilters
-                      //                 .map(
-                      //                     (distance) => Text(distance.toString()))
-                      //                 .toList(growable: false),
-                      //           ),
-                      //         ],
-                      //       ),
-                      //     ))
-                    ],
-                  ),
+                  // child: FlutterMap(
+
+                  //   options: MapOptions(
+                  //     center: latLng,
+                  //     zoom: 14,
+                  //     maxZoom: 26,
+                  //     keepAlive: true,
+                  //     plugins: [
+                  //       LocationMarkerPlugin(), // <-- add plugin here
+                  //     ],
+                  //   ),
+                  //   layers: [
+                  //     TileLayerOptions(
+                  //       urlTemplate:
+                  //           'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+                  //       subdomains: ['a', 'b', 'c'],
+                  //       userAgentPackageName:
+                  //           'net.tlserver6y.flutter_map_location_marker.example',
+                  //     ),
+                  //     LocationMarkerLayerOptions(
+                  //       positionStream: positionStream.stream,
+                  //       marker: const DefaultLocationMarker(
+                  //         color: Colors.green,
+                  //         child: Icon(
+                  //           Icons.person,
+                  //           color: Colors.white,
+                  //         ),
+                  //       ),
+                  //       markerSize: const Size(40, 40),
+                  //       accuracyCircleColor: Colors.green.withOpacity(0.1),
+                  //       headingSectorColor: Colors.green.withOpacity(0.8),
+                  //       headingSectorRadius: 120,
+                  //       moveAnimationDuration: Duration.zero,
+                  //     ),
+                  //     // Align(
+                  //     //     alignment: Alignment.bottomCenter,
+                  //     //     child: Container(
+                  //     //       color: Theme.of(context).scaffoldBackgroundColor,
+                  //     //       padding: const EdgeInsets.all(8),
+                  //     //       child: Row(
+                  //     //         mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  //     //         children: [
+                  //     //           const Text("Distance Filter:"),
+                  //     //           ToggleButtons(
+                  //     //             isSelected: List.generate(
+                  //     //               distanceFilters.length,
+                  //     //               (index) => index == _selectedIndex,
+                  //     //               growable: false,
+                  //     //             ),
+                  //     //             onPressed: (index) {
+                  //     //               setState(() => _selectedIndex = index);
+                  //     //               streamSubscription.cancel();
+                  //     //               _subscriptPositionStream();
+                  //     //             },
+                  //     //             children: distanceFilters
+                  //     //                 .map(
+                  //     //                     (distance) => Text(distance.toString()))
+                  //     //                 .toList(growable: false),
+                  //     //           ),
+                  //     //         ],
+                  //     //       ),
+                  //     //     ))
+                  //   ],
+                  // ),
                 ),
               ),
               CardTemplateBlack(
