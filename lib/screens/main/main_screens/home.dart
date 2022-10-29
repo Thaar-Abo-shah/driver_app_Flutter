@@ -8,7 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 // import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:geolocator/geolocator.dart';
+// import 'package:geolocator/geolocator.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
@@ -112,6 +112,7 @@ class _HomeState extends State<Home> {
     location.getLocation().then(
       (location) {
         currentLocation = location;
+        setState(() {});
       },
     );
     GoogleMapController googleMapController = await _controller.future;
