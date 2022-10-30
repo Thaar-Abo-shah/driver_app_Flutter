@@ -75,7 +75,7 @@ dependencies:
   firebase_database: ^9.1.7
   firebase_storage: ^10.3.11
   location: ^4.4.0
-
+  flutter_polyline_points: ^1.0.0
 dev_dependencies:
   flutter_test:
     sdk: flutter

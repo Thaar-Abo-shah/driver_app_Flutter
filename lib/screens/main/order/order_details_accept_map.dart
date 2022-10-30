@@ -5,10 +5,10 @@ import 'package:driver_app/widget/app_button.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_map/flutter_map.dart';
-import 'package:flutter_map_location_marker/flutter_map_location_marker.dart';
+// import 'package:flutter_map/flutter_map.dart';
+// import 'package:flutter_map_location_marker/flutter_map_location_marker.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:geolocator/geolocator.dart';
+// import 'package:geolocator/geolocator.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:loader_overlay/loader_overlay.dart';
@@ -21,22 +21,22 @@ import 'package:lottie/lottie.dart';
 // import 'package:otlob/widget/row_edit_svg.dart';
 import 'package:pinput/pinput.dart';
 import 'package:shimmer/shimmer.dart';
-import 'package:timer_count_down/timer_count_down.dart';
-import 'package:latlong2/latlong.dart';
+// import 'package:timer_count_down/timer_count_down.dart';
+// import 'package:latlong2/latlong.dart';
 
 import '../../../value/colors.dart';
 import '../../../widget/app_style_text.dart';
-import '../../../widget/card_template_black.dart';
-import '../../../widget/component.dart';
-import '../../../widget/continer_list_details.dart';
-import '../../../widget/continer_list_details_done.dart';
-import '../../../widget/continer_list_details_order_details.dart';
+// import '../../../widget/card_template_black.dart';
+// import '../../../widget/component.dart';
+// import '../../../widget/continer_list_details.dart';
+// import '../../../widget/continer_list_details_done.dart';
+// import '../../../widget/continer_list_details_order_details.dart';
 import '../../../widget/continer_list_details_order_details_accept.dart';
-import '../../../widget/continer_list_details_order_details_mutli.dart';
+// import '../../../widget/continer_list_details_order_details_mutli.dart';
 import '../../../widget/custom_image.dart';
 import '../../Auth/sing_in.dart';
 import 'map_customer.dart';
-import 'order_customer_details.dart';
+// import 'order_customer_details.dart';
 
 // import '../../widget/app_button.dart';
 // import '../../widget/card_template.dart';
@@ -50,7 +50,7 @@ class OrderDetailsAccept extends StatefulWidget {
   // const OrderDetailsAccept({Key? key}) : super(key: key);
   bool isDone = false;
 
-  OrderDetailsAccept({ this.isDone= false});
+  OrderDetailsAccept({this.isDone = false});
 
   @override
   State<OrderDetailsAccept> createState() => _OrderDetailsAcceptState();
@@ -61,8 +61,8 @@ class _OrderDetailsAcceptState extends State<OrderDetailsAccept> {
     ..onTap = () => onTapRecognizer();
   bool isSwitched = true;
 
-  late StreamController<LocationMarkerPosition> positionStream;
-  late StreamSubscription<LocationMarkerPosition> streamSubscription;
+  // late StreamController<LocationMarkerPosition> positionStream;
+  // late StreamSubscription<LocationMarkerPosition> streamSubscription;
 
   void onTapRecognizer() {
     Navigator.push(
@@ -86,7 +86,7 @@ class _OrderDetailsAcceptState extends State<OrderDetailsAccept> {
   //   radius: 4000,
   //
   // )]);
-  LatLng latLng = LatLng(31.524574924915523, 34.448129281505175);
+  // LatLng latLng = LatLng(31.524574924915523, 34.448129281505175);
 
   // static final CameraPosition _kLake = CameraPosition(
   //     bearing: 192.8334901395799,
@@ -114,7 +114,7 @@ class _OrderDetailsAcceptState extends State<OrderDetailsAccept> {
   @override
   void initState() {
     // TODO: implement initState
-    positionStream = StreamController();
+    // positionStream = StreamController();
 
     SystemChrome.setSystemUIOverlayStyle(
         SystemUiOverlayStyle(statusBarColor: AppColors.appColor));
@@ -123,7 +123,7 @@ class _OrderDetailsAcceptState extends State<OrderDetailsAccept> {
 
   @override
   void dispose() {
-    positionStream.close();
+    // positionStream.close();
 
     // TODO: implement dispose
     SystemChrome.setSystemUIOverlayStyle(
@@ -228,39 +228,38 @@ class _OrderDetailsAcceptState extends State<OrderDetailsAccept> {
                             borderRadius: BorderRadius.circular(8.r),
                           ),
                           child: ContainerOrderDetailsAccept(
-                              visible: widget.isDone,
-                              mainImage:
-                                  'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSoAqq8ntj8qyExkcgeHC0GbRQmgFduGFlvTxBbWplYHWJsZK89vsKcxkjcDqx3tWODJhw&usqp=CAU',
-                              secondImage:
-                                  'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSoAqq8ntj8qyExkcgeHC0GbRQmgFduGFlvTxBbWplYHWJsZK89vsKcxkjcDqx3tWODJhw&usqp=CAU',
-                              mainTitle: 'مطعم هارت اتاك ',
-                              time: 'يجب توصيله خلال 25 - 30 ',
-                              space: '5.2',
-                              rate: '22-05-2022   10:45 مساء',
-                              mainGreen: 'التوصيل مجانا',
-                              subGreen: 'لفترة محدودة',
-                              mainYellow: '45',
-                              subYellow: 'خصم على كل الطلبات',
-                              map: 'أبو مازن السوري',
-                              price: '78',
-                              onPressed: () {},
-                              onPressedAccept: ()async {
-                                context.loaderOverlay
-                                    .show(widget: ReconnectingOverlay());
+                            visible: widget.isDone,
+                            mainImage:
+                                'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSoAqq8ntj8qyExkcgeHC0GbRQmgFduGFlvTxBbWplYHWJsZK89vsKcxkjcDqx3tWODJhw&usqp=CAU',
+                            secondImage:
+                                'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSoAqq8ntj8qyExkcgeHC0GbRQmgFduGFlvTxBbWplYHWJsZK89vsKcxkjcDqx3tWODJhw&usqp=CAU',
+                            mainTitle: 'مطعم هارت اتاك ',
+                            time: 'يجب توصيله خلال 25 - 30 ',
+                            space: '5.2',
+                            rate: '22-05-2022   10:45 مساء',
+                            mainGreen: 'التوصيل مجانا',
+                            subGreen: 'لفترة محدودة',
+                            mainYellow: '45',
+                            subYellow: 'خصم على كل الطلبات',
+                            map: 'أبو مازن السوري',
+                            price: '78',
+                            onPressed: () {},
+                            onPressedAccept: () async {
+                              context.loaderOverlay
+                                  .show(widget: ReconnectingOverlay());
 
-                                await  Future.delayed(Duration(seconds: 5), () {
-                                  context.loaderOverlay.hide();
-                                });
-                              },
-                              onPressedCancel: () {},
-                              onPressedMap: () {
-                                Get.to(OrderDetailsMap());
-                              }, onPressedMapDetails: () {
-                                Get.to(MapCustomer());
-
-
-
-                          },));
+                              await Future.delayed(Duration(seconds: 5), () {
+                                context.loaderOverlay.hide();
+                              });
+                            },
+                            onPressedCancel: () {},
+                            onPressedMap: () {
+                              Get.to(OrderDetailsMap());
+                            },
+                            onPressedMapDetails: () {
+                              Get.to(MapCustomer());
+                            },
+                          ));
                     },
                     separatorBuilder: (context, index) {
                       return SizedBox(
