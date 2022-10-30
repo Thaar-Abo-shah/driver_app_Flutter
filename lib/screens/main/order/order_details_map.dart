@@ -346,11 +346,11 @@ class _OrderDetailsMapState extends State<OrderDetailsMap> {
                                 position: LatLng(currentLocation!.latitude!,
                                     currentLocation!.longitude!),
                               ),
-                              // Marker(
-                              //   markerId: MarkerId("source"),
-                              //   position: LatLng(currentLocation!.latitude!,
-                              //       currentLocation!.longitude!),
-                              // ),
+                              Marker(
+                                markerId: MarkerId("source"),
+                                position: LatLng(currentLocation!.latitude!,
+                                    currentLocation!.longitude!),
+                              ),
                               Marker(
                                 markerId: MarkerId("destination"),
                                 position: LatLng(
