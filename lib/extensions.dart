@@ -103,6 +103,8 @@ Future createUser(
     'CarType': 'يرجى ادخال نوع المركبة',
     'CarNumber': 'يرجى ادخال رقم المركبة',
     'CarModel': 'يرجى ادخال موديل المركبة',
+    'OrderCount': 0,
+    'TotalPay': 0
   };
 
   docUser.set(json);

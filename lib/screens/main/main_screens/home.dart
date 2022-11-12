@@ -1,5 +1,10 @@
 import 'dart:async';
+import 'dart:developer';
+import 'dart:ffi';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+
 import 'package:driver_app/screens/main/order/order_details_multi.dart';
 import 'package:driver_app/screens/main/order/order_details_one.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -135,17 +140,40 @@ class _HomeState extends State<Home> {
     );
   }
 
+  Query<Map<String, dynamic>> _collectionRef =
+      FirebaseFirestore.instance.collection('orders');
+
+  getData() async {
+    // Get docs from collection reference
+    QuerySnapshot querySnapshot = await _collectionRef.get();
+    List ll = [];
+    // Get data from docs and convert map to List
+    final allData = querySnapshot.docs.map((doc) => doc.data()).toList();
+    Iterable l = allData;
+    for (var e in l) {
+      var ee = e as Map;
+
+      for (var eee in ee.values) {
+        // print('There is =====>>>> ${eee.values} Mealsss in your restaurant');
+        ll.add(eee);
+      }
+    }
+    // print(
+    //     'There is =====>>>> ${ll[9]['orderStatus']} Mealsss in your restaurant');
+    return ll;
+  }
+
   @override
   void initState() {
     // TODO: implement initState
 
     // positionStream = StreamController();
-
+    user = _auth.currentUser;
     SystemChrome.setSystemUIOverlayStyle(
         SystemUiOverlayStyle(statusBarColor: AppColors.appColor));
     getCurrentLocation();
+
     super.initState();
-    user = _auth.currentUser;
   }
 
   @override
@@ -163,6 +191,10 @@ class _HomeState extends State<Home> {
 
   @override
   Widget build(BuildContext context) {
+    // log("sadasdasdasdasdasdasdasdasdasdasdasd");
+    // var ll = getData().toList();
+    // print(
+    //     'There is =====>>>> ${ll[9]['orderStatus']} Mealsss in your restaurant');
     // SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
     //     statusBarColor: AppColors.appColor
     // ));
@@ -174,65 +206,78 @@ class _HomeState extends State<Home> {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(10),
         ),
-        leading: Row(
-          children: [
-            SizedBox(
-              width: 6.w,
-            ),
-            Container(
-              height: 40.h,
-              width: 40.w,
-              padding: EdgeInsets.all(3.r),
-              decoration: BoxDecoration(
-                  border: Border.all(color: Colors.white),
-                  shape: BoxShape.circle,
-                  color: Colors.white),
-              child: SizedBox(
-                height: 28.h,
-                width: 28.w,
-                child: Container(
-                  clipBehavior: Clip.antiAlias,
-                  decoration: BoxDecoration(shape: BoxShape.circle),
-                  child: CachedNetworkImage(
-                    imageUrl:
-                        'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxzZWFyY2h8Mnx8cGVyc29ufGVufDB8fDB8fA%3D%3D&w=1000&q=80',
-                    // buildContext: context,
-                    // height: 72.h,
-                    // width: 72.w,
-                    imageBuilder: (context, imageProvider) => Container(
+        leading: FutureBuilder<DocumentSnapshot>(
+            future: FirebaseFirestore.instance
+                .collection('drivers')
+                .doc(_auth.currentUser!.uid)
+                .get(),
+            builder: (BuildContext context,
+                AsyncSnapshot<DocumentSnapshot> snapshot) {
+              if (snapshot.connectionState == ConnectionState.done) {
+                Map<String, dynamic> data =
+                    snapshot.data!.data() as Map<String, dynamic>;
+                return Row(
+                  children: [
+                    SizedBox(
+                      width: 6.w,
+                    ),
+                    Container(
+                      height: 40.h,
+                      width: 40.w,
+                      padding: EdgeInsets.all(3.r),
                       decoration: BoxDecoration(
-                        image: DecorationImage(
-                          image: imageProvider,
-                          fit: BoxFit.cover,
+                          border: Border.all(color: Colors.white),
+                          shape: BoxShape.circle,
+                          color: Colors.white),
+                      child: SizedBox(
+                        height: 28.h,
+                        width: 28.w,
+                        child: Container(
+                          clipBehavior: Clip.antiAlias,
+                          decoration: BoxDecoration(shape: BoxShape.circle),
+                          child: CachedNetworkImage(
+                            imageUrl: '${data['Img']}',
+                            // buildContext: context,
+                            // height: 72.h,
+                            // width: 72.w,
+                            imageBuilder: (context, imageProvider) => Container(
+                              decoration: BoxDecoration(
+                                image: DecorationImage(
+                                  image: imageProvider,
+                                  fit: BoxFit.cover,
+                                ),
+                              ),
+                            ),
+                            placeholder: (context, url) =>
+                                shimmerCarDes(context),
+                            errorWidget: (context, url, error) =>
+                                const Icon(Icons.error),
+                          ),
                         ),
                       ),
                     ),
-                    placeholder: (context, url) => shimmerCarDes(context),
-                    errorWidget: (context, url, error) =>
-                        const Icon(Icons.error),
-                  ),
-                ),
-              ),
-            ),
-            SizedBox(
-              width: 6.w,
-            ),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                AppTextStyle(
-                  name: 'مرحباً، أحمد',
-                  fontWeight: FontWeight.w900,
-                  fontSize: 10.sp,
-                ),
-                SizedBox(
-                  height: 6.h,
-                ),
-              ],
-            ),
-          ],
-        ),
+                    SizedBox(
+                      width: 6.w,
+                    ),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        AppTextStyle(
+                          name: '${data['Name']}' + ' مرحباً',
+                          fontWeight: FontWeight.w900,
+                          fontSize: 10.sp,
+                        ),
+                        SizedBox(
+                          height: 6.h,
+                        ),
+                      ],
+                    ),
+                  ],
+                );
+              } else
+                return Text("Loading");
+            }),
         // leading: MenuWidget(),
         actions: [
           Switch(
@@ -259,241 +304,237 @@ class _HomeState extends State<Home> {
         backgroundColor: AppColors.appColor,
         title: Text(''.tr),
       ),
-      body: ListView(
-        shrinkWrap: true,
-        // physics: NeverScrollableScrollPhysics(),
-        padding: EdgeInsets.symmetric(vertical: 0.h),
-        children: [
-          ListView(
-            shrinkWrap: true,
-            physics: NeverScrollableScrollPhysics(),
-            padding: EdgeInsets.symmetric(vertical: 20.h, horizontal: 16.w),
-            children: [
-              SizedBox(
-                height: 10.h,
-              ),
-              AppTextStyle(
-                name: 'الطلبات الحالية',
-                fontSize: 12.sp,
-              ),
-              SizedBox(
-                height: 10.h,
-              ),
-              ListView.separated(
-                  shrinkWrap: true,
-                  itemBuilder: (context, index) {
-                    return Container(
-                        height: 70.h,
-                        decoration: BoxDecoration(
-                          color: AppColors.greyF6,
-                          borderRadius: BorderRadius.circular(8.r),
-                        ),
-                        child: ContainerListDetails(
-                            visible: true,
-                            mainImage:
-                                'https://img.freepik.com/premium-vector/restaurant-logo-design-template_79169-56.jpg?w=2000',
-                            secondImage:
-                                'https://img.freepik.com/premium-vector/restaurant-logo-design-template_79169-56.jpg?w=2000',
-                            mainTitle: index == 0
-                                ? 'مطبخ الشام للفطائر الجاهزة '
-                                : 'من عدة مطاعم',
-                            time: 'يجب توصيله خلال 25 - 30 ',
-                            space: '5.2',
-                            rate: '22-05-2022   10:45 مساء',
-                            mainGreen: 'التوصيل مجانا',
-                            subGreen: 'لفترة محدودة',
-                            mainYellow: '45',
-                            subYellow: 'خصم على كل الطلبات',
-                            map: 'أبو مازن السوري',
-                            price: '78',
-                            onPressed: () {
-                              if (index == 0) {
-                                Get.to(OrderDetailsOne());
-                              } else {
-                                Get.to(OrderDetailsMulti());
-                              }
-                            }));
-                  },
-                  separatorBuilder: (context, index) {
-                    return SizedBox(
-                      height: 16.h,
+      body: Column(
+          // shrinkWrap: true,
+          // physics: NeverScrollableScrollPhysics(),
+          // padding: EdgeInsets.symmetric(vertical: 0.h),
+          children: [
+            FutureBuilder(
+                future: getData(),
+                builder: (BuildContext context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.done) {
+                    var data = snapshot.data as List;
+                    print(data);
+                    int i = data.length;
+                    log('kljljsladjasld jlaskjdlasjd ${i}');
+                    return ListView.builder(
+                      shrinkWrap: true,
+                      scrollDirection: Axis.horizontal,
+                      itemCount: i,
+                      itemBuilder: (context, index) => Column(
+                        children: [
+                          Text(data[0]['mealsName']),
+                          // Text(data[0].mealsName),
+                        ],
+                      ),
                     );
-                  },
-                  itemCount: 2),
-              SizedBox(
-                height: 10.h,
-              ),
-              AppTextStyle(
-                name: 'الطلبات المكتملة',
-                fontSize: 12.sp,
-              ),
-              SizedBox(
-                height: 10.h,
-              ),
-              ListView.separated(
-                  shrinkWrap: true,
-                  physics: NeverScrollableScrollPhysics(),
-                  itemBuilder: (context, index) {
-                    return Container(
-                        height: 60.h,
-                        decoration: BoxDecoration(
-                          color: AppColors.greyF6,
-                          borderRadius: BorderRadius.circular(8.r),
-                        ),
-                        child: ContainerListDetailsDone(
-                            visible: true,
-                            mainImage:
-                                'https://img.freepik.com/premium-vector/restaurant-logo-design-template_79169-56.jpg?w=2000',
-                            secondImage:
-                                'https://img.freepik.com/premium-vector/restaurant-logo-design-template_79169-56.jpg?w=2000',
-                            mainTitle: index == 0
-                                ? 'مطبخ الشام للفطائر الجاهزة '
-                                : 'من عدة مطاعم',
-                            time: 'يجب توصيله خلال 25 - 30 ',
-                            space: '5.2',
-                            rate: '22-05-2022   10:45 مساء',
-                            mainGreen: 'التوصيل مجانا',
-                            subGreen: 'لفترة محدودة',
-                            mainYellow: '45',
-                            subYellow: 'خصم على كل الطلبات',
-                            map: 'أبو مازن السوري',
-                            price: '78',
-                            onPressed: () {}));
-                  },
-                  separatorBuilder: (context, index) {
-                    return SizedBox(
-                      height: 16.h,
-                    );
-                  },
-                  itemCount: 3),
-              SizedBox(
-                height: 10.h,
-              ),
-              AppTextStyle(
-                name: 'موقعي الحالي',
-                fontSize: 12.sp,
-              ),
-              SizedBox(
-                height: 10.h,
-              ),
-              SizedBox(
-                height: 122.h,
-                child: Container(
-                  clipBehavior: Clip.antiAliasWithSaveLayer,
-                  height: 122.h,
-                  decoration:
-                      BoxDecoration(borderRadius: BorderRadius.circular(8.r)),
-                  child: currentLocation == null
-                      ? const Center(child: Text("Loading"))
-                      : GoogleMap(
-                          myLocationEnabled: true,
-                          initialCameraPosition: CameraPosition(
-                            target: LatLng(currentLocation!.latitude!,
-                                currentLocation!.longitude!),
-                            zoom: 13.5,
-                          ),
-                          markers: {
-                            Marker(
-                              markerId: const MarkerId("currentLocation"),
-                              position: LatLng(currentLocation!.latitude!,
-                                  currentLocation!.longitude!),
-                            ),
-                            //  Marker(
-                            //   markerId: MarkerId("source"),
-                            //   position: latLng,
-                            // ),
-                            // const Marker(
-                            //   markerId: MarkerId("destination"),
-                            //   position: destination,
-                            // ),
-                          },
-                          onMapCreated: (mapController) {
-                            // _controller.complete(mapController); //  Marker(
-                            //   markerId: MarkerId("source"),
-                            //   position: latLng,
-                            // ),
-                            // const Marker(
-                            //   markerId: MarkerId("destination"),
-                            //   position: destination,
-                            // ),
-                          },
-                        ),
-                  // child: FlutterMap(
+                  }
+                  return Text('jksdhkshhd');
+                })
+          ]
 
-                  //   options: MapOptions(
-                  //     center: latLng,
-                  //     zoom: 14,
-                  //     maxZoom: 26,
-                  //     keepAlive: true,
-                  //     plugins: [
-                  //       LocationMarkerPlugin(), // <-- add plugin here
-                  //     ],
-                  //   ),
-                  //   layers: [
-                  //     TileLayerOptions(
-                  //       urlTemplate:
-                  //           'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-                  //       subdomains: ['a', 'b', 'c'],
-                  //       userAgentPackageName:
-                  //           'net.tlserver6y.flutter_map_location_marker.example',
-                  //     ),
-                  //     LocationMarkerLayerOptions(
-                  //       positionStream: positionStream.stream,
-                  //       marker: const DefaultLocationMarker(
-                  //         color: Colors.green,
-                  //         child: Icon(
-                  //           Icons.person,
-                  //           color: Colors.white,
-                  //         ),
-                  //       ),
-                  //       markerSize: const Size(40, 40),
-                  //       accuracyCircleColor: Colors.green.withOpacity(0.1),
-                  //       headingSectorColor: Colors.green.withOpacity(0.8),
-                  //       headingSectorRadius: 120,
-                  //       moveAnimationDuration: Duration.zero,
-                  //     ),
-                  //     // Align(
-                  //     //     alignment: Alignment.bottomCenter,
-                  //     //     child: Container(
-                  //     //       color: Theme.of(context).scaffoldBackgroundColor,
-                  //     //       padding: const EdgeInsets.all(8),
-                  //     //       child: Row(
-                  //     //         mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  //     //         children: [
-                  //     //           const Text("Distance Filter:"),
-                  //     //           ToggleButtons(
-                  //     //             isSelected: List.generate(
-                  //     //               distanceFilters.length,
-                  //     //               (index) => index == _selectedIndex,
-                  //     //               growable: false,
-                  //     //             ),
-                  //     //             onPressed: (index) {
-                  //     //               setState(() => _selectedIndex = index);
-                  //     //               streamSubscription.cancel();
-                  //     //               _subscriptPositionStream();
-                  //     //             },
-                  //     //             children: distanceFilters
-                  //     //                 .map(
-                  //     //                     (distance) => Text(distance.toString()))
-                  //     //                 .toList(growable: false),
-                  //     //           ),
-                  //     //         ],
-                  //     //       ),
-                  //     //     ))
-                  //   ],
-                  // ),
-                ),
-              ),
-              CardTemplateBlack(
-                prefix: 'maps',
-                title: '25 شارع عبدالسلام النابلسي، الصفة الغربية',
-                // colorFont: AppColors.black,
-                controller: TextEditingController(),
-              ),
-            ],
+          // [
+          //   StreamBuilder<QuerySnapshot>(
+          //     stream: getData(),
+          //     builder: (context, snapshot) {
+          //       if (snapshot.hasData) {
+          //         return ListView.builder(
+          //             itemCount: snapshot.data!.docs.length,
+          //             shrinkWrap: true,
+          //             physics: NeverScrollableScrollPhysics(),
+          //             padding: EdgeInsets.symmetric(
+          //                 vertical: 20.h, horizontal: 16.w),
+          //             itemBuilder: (context, index) {
+          //               var doc = snapshot.data!.docs[index].data() as Map;
+          //               // log('lksdjflksd ${doc}');
+          //               var x = doc.values;
+          //               var b = x;
+          //               // log('lksdjflksd ${b}');
+          //               for (var e in x) {
+          //                 // log('lksdjflksd ${e['orderStatus']}');
+          //                 Text('lksdjflksd ${e['orderStatus']}');
+          //               }
+          //               return Text("data");
+          // return ListView(
+          //   shrinkWrap: true,
+          //   physics: NeverScrollableScrollPhysics(),
+          //   padding: EdgeInsets.symmetric(
+          //       vertical: 20.h, horizontal: 16.w),
+          //   children: [
+          //     SizedBox(
+          //       height: 10.h,
+          //     ),
+          //     AppTextStyle(
+          //       name: 'الطلبات الحالية',
+          //       fontSize: 12.sp,
+          //     ),
+          //     SizedBox(
+          //       height: 10.h,
+          //     ),
+          //     ListView.separated(
+          //         shrinkWrap: true,
+          //         itemBuilder: (context, index) {
+          //           return Container(
+          //               height: 70.h,
+          //               decoration: BoxDecoration(
+          //                 color: AppColors.greyF6,
+          //                 borderRadius:
+          //                     BorderRadius.circular(8.r),
+          //               ),
+          //               child: ContainerListDetails(
+          //                   visible: true,
+          //                   mainImage:
+          //                       'https://img.freepik.com/premium-vector/restaurant-logo-design-template_79169-56.jpg?w=2000',
+          //                   secondImage:
+          //                       'https://img.freepik.com/premium-vector/restaurant-logo-design-template_79169-56.jpg?w=2000',
+          //                   mainTitle: index == 0
+          //                       ? 'مطبخ الشام للفطائر الجاهزة '
+          //                       : 'من عدة مطاعم',
+          //                   time: 'يجب توصيله خلال 25 - 30 ',
+          //                   space: '5.2',
+          //                   rate: '22-05-2022   10:45 مساء',
+          //                   mainGreen: 'التوصيل مجانا',
+          //                   subGreen: 'لفترة محدودة',
+          //                   mainYellow: '45',
+          //                   subYellow: 'خصم على كل الطلبات',
+          //                   map: 'أبو مازن السوري',
+          //                   price: '78',
+          //                   onPressed: () {
+          //                     if (index == 0) {
+          //                       Get.to(OrderDetailsOne());
+          //                     } else {
+          //                       Get.to(OrderDetailsMulti());
+          //                     }
+          //                   }));
+          //         },
+          //         separatorBuilder: (context, index) {
+          //           return SizedBox(
+          //             height: 16.h,
+          //           );
+          //         },
+          //         itemCount: 2),
+          //     SizedBox(
+          //       height: 10.h,
+          //     ),
+          //     AppTextStyle(
+          //       name: 'الطلبات المكتملة',
+          //       fontSize: 12.sp,
+          //     ),
+          //     SizedBox(
+          //       height: 10.h,
+          //     ),
+          //     ListView.separated(
+          //         shrinkWrap: true,
+          //         physics: NeverScrollableScrollPhysics(),
+          //         itemBuilder: (context, index) {
+          //           return Container(
+          //               height: 60.h,
+          //               decoration: BoxDecoration(
+          //                 color: AppColors.greyF6,
+          //                 borderRadius:
+          //                     BorderRadius.circular(8.r),
+          //               ),
+          //               child: ContainerListDetailsDone(
+          //                   visible: true,
+          //                   mainImage:
+          //                       'https://img.freepik.com/premium-vector/restaurant-logo-design-template_79169-56.jpg?w=2000',
+          //                   secondImage:
+          //                       'https://img.freepik.com/premium-vector/restaurant-logo-design-template_79169-56.jpg?w=2000',
+          //                   mainTitle: index == 0
+          //                       ? 'مطبخ الشام للفطائر الجاهزة '
+          //                       : 'من عدة مطاعم',
+          //                   time: 'يجب توصيله خلال 25 - 30 ',
+          //                   space: '5.2',
+          //                   rate: '22-05-2022   10:45 مساء',
+          //                   mainGreen: 'التوصيل مجانا',
+          //                   subGreen: 'لفترة محدودة',
+          //                   mainYellow: '45',
+          //                   subYellow: 'خصم على كل الطلبات',
+          //                   map: 'أبو مازن السوري',
+          //                   price: '78',
+          //                   onPressed: () {}));
+          //         },
+          //         separatorBuilder: (context, index) {
+          //           return SizedBox(
+          //             height: 16.h,
+          //           );
+          //         },
+          //         itemCount: 3),
+          //     SizedBox(
+          //       height: 10.h,
+          //     ),
+          //     AppTextStyle(
+          //       name: 'موقعي الحالي',
+          //       fontSize: 12.sp,
+          //     ),
+          //     SizedBox(
+          //       height: 10.h,
+          //     ),
+          //     SizedBox(
+          //       height: 122.h,
+          //       child: Container(
+          //         clipBehavior: Clip.antiAliasWithSaveLayer,
+          //         height: 122.h,
+          //         decoration: BoxDecoration(
+          //             borderRadius: BorderRadius.circular(8.r)),
+          //         child: currentLocation == null
+          //             ? const Center(child: Text("Loading"))
+          //             : GoogleMap(
+          //                 myLocationEnabled: true,
+          //                 initialCameraPosition: CameraPosition(
+          //                   target: LatLng(
+          //                       currentLocation!.latitude!,
+          //                       currentLocation!.longitude!),
+          //                   zoom: 13.5,
+          //                 ),
+          //                 markers: {
+          //                   Marker(
+          //                     markerId: const MarkerId(
+          //                         "currentLocation"),
+          //                     position: LatLng(
+          //                         currentLocation!.latitude!,
+          //                         currentLocation!.longitude!),
+          //                   ),
+          //                   //  Marker(
+          //                   //   markerId: MarkerId("source"),
+          //                   //   position: latLng,
+          //                   // ),
+          //                   // const Marker(
+          //                   //   markerId: MarkerId("destination"),
+          //                   //   position: destination,
+          //                   // ),
+          //                 },
+          //                 onMapCreated: (mapController) {
+          //                   // _controller.complete(mapController); //  Marker(
+          //                   //   markerId: MarkerId("source"),
+          //                   //   position: latLng,
+          //                   // ),
+          //                   // const Marker(
+          //                   //   markerId: MarkerId("destination"),
+          //                   //   position: destination,
+          //                   // ),
+          //                 },
+          //               ),
+          //       ),
+          //     ),
+          //     CardTemplateBlack(
+          //       prefix: 'maps',
+          //       title:
+          //           '25 شارع عبدالسلام النابلسي، الصفة الغربية',
+          //       // colorFont: AppColors.black,
+          //       controller: TextEditingController(),
+          //     ),
+          //   ],
+          // );
+          //             });
+          //       } else {
+          //         return Text("No data ");
+          //       }
+          //     },
+          //   )
+          //   //
+          // ],
           ),
-        ],
-      ),
     );
   }
 }
