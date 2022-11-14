@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:developer';
 import 'dart:ffi';
+import 'dart:math';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
@@ -111,13 +112,15 @@ class _HomeState extends State<Home> {
     ),
   );
 
-  LocationData? currentLocation;
+  static LocationData? currentLocation;
   void getCurrentLocation() async {
     Location location = Location();
     location.getLocation().then(
       (location) {
         currentLocation = location;
-        setState(() {});
+        setState(() {
+          currentLocation = location;
+        });
       },
     );
     GoogleMapController googleMapController = await _controller.future;
@@ -140,13 +143,21 @@ class _HomeState extends State<Home> {
     );
   }
 
+  double calculateDistance(lat1, lon1, lat2, lon2) {
+    var p = 0.017453292519943295;
+    var a = 0.5 -
+        cos((lat2 - lat1) * p) / 2 +
+        cos(lat1 * p) * cos(lat2 * p) * (1 - cos((lon2 - lon1) * p)) / 2;
+    return 12742 * asin(sqrt(a));
+  }
+
   Query<Map<String, dynamic>> _collectionRef =
       FirebaseFirestore.instance.collection('orders');
 
-  getData() async {
+  getData_paid() async {
     // Get docs from collection reference
     QuerySnapshot querySnapshot = await _collectionRef.get();
-    List ll = [];
+    List<Object> ll = [];
     // Get data from docs and convert map to List
     final allData = querySnapshot.docs.map((doc) => doc.data()).toList();
     Iterable l = allData;
@@ -155,12 +166,36 @@ class _HomeState extends State<Home> {
 
       for (var eee in ee.values) {
         // print('There is =====>>>> ${eee.values} Mealsss in your restaurant');
-        ll.add(eee);
+        if (eee['orderStatus'] == 'paid') {
+          ll.add(eee);
+        }
       }
     }
     // print(
     //     'There is =====>>>> ${ll[9]['orderStatus']} Mealsss in your restaurant');
+
     return ll;
+  }
+
+  static List res1 = [];
+  getRes(String resId) async {
+    var _res = FirebaseFirestore.instance
+        .collection('restaurant')
+        .where("emailAuthUid", isEqualTo: resId);
+    QuerySnapshot querySnapshot1 = await _res.get();
+    final allData1 = querySnapshot1.docs.map((doc1) => doc1.data()).toList();
+    Iterable l = allData1;
+    res1 = [];
+    for (var e1 in l) {
+      var ee1 = e1 as Map;
+      var eee1 = ee1;
+      res1.add(eee1);
+    }
+    // log('klsjdlsdjfljsdljskdfjlsjd${allData.toString()}');
+    // res.addAll(allData);
+    // res = allData as Map;
+    // log('klsjdlsdjfljsdljskdfjlsjd${allData.toString()}');
+    return res1;
   }
 
   @override
@@ -285,7 +320,6 @@ class _HomeState extends State<Home> {
             onChanged: (value) {
               setState(() {
                 isSwitched = value;
-                print(isSwitched);
               });
             },
             activeTrackColor: AppColors.grey,
@@ -304,237 +338,230 @@ class _HomeState extends State<Home> {
         backgroundColor: AppColors.appColor,
         title: Text(''.tr),
       ),
-      body: Column(
-          // shrinkWrap: true,
-          // physics: NeverScrollableScrollPhysics(),
-          // padding: EdgeInsets.symmetric(vertical: 0.h),
-          children: [
-            FutureBuilder(
-                future: getData(),
-                builder: (BuildContext context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.done) {
-                    var data = snapshot.data as List;
-                    print(data);
-                    int i = data.length;
-                    log('kljljsladjasld jlaskjdlasjd ${i}');
-                    return ListView.builder(
-                      shrinkWrap: true,
-                      scrollDirection: Axis.horizontal,
-                      itemCount: i,
-                      itemBuilder: (context, index) => Column(
-                        children: [
-                          Text(data[0]['mealsName']),
-                          // Text(data[0].mealsName),
-                        ],
-                      ),
-                    );
-                  }
-                  return Text('jksdhkshhd');
-                })
-          ]
-
-          // [
-          //   StreamBuilder<QuerySnapshot>(
-          //     stream: getData(),
-          //     builder: (context, snapshot) {
-          //       if (snapshot.hasData) {
-          //         return ListView.builder(
-          //             itemCount: snapshot.data!.docs.length,
-          //             shrinkWrap: true,
-          //             physics: NeverScrollableScrollPhysics(),
-          //             padding: EdgeInsets.symmetric(
-          //                 vertical: 20.h, horizontal: 16.w),
-          //             itemBuilder: (context, index) {
-          //               var doc = snapshot.data!.docs[index].data() as Map;
-          //               // log('lksdjflksd ${doc}');
-          //               var x = doc.values;
-          //               var b = x;
-          //               // log('lksdjflksd ${b}');
-          //               for (var e in x) {
-          //                 // log('lksdjflksd ${e['orderStatus']}');
-          //                 Text('lksdjflksd ${e['orderStatus']}');
-          //               }
-          //               return Text("data");
-          // return ListView(
-          //   shrinkWrap: true,
-          //   physics: NeverScrollableScrollPhysics(),
-          //   padding: EdgeInsets.symmetric(
-          //       vertical: 20.h, horizontal: 16.w),
-          //   children: [
-          //     SizedBox(
-          //       height: 10.h,
-          //     ),
-          //     AppTextStyle(
-          //       name: 'الطلبات الحالية',
-          //       fontSize: 12.sp,
-          //     ),
-          //     SizedBox(
-          //       height: 10.h,
-          //     ),
-          //     ListView.separated(
-          //         shrinkWrap: true,
-          //         itemBuilder: (context, index) {
-          //           return Container(
-          //               height: 70.h,
-          //               decoration: BoxDecoration(
-          //                 color: AppColors.greyF6,
-          //                 borderRadius:
-          //                     BorderRadius.circular(8.r),
-          //               ),
-          //               child: ContainerListDetails(
-          //                   visible: true,
-          //                   mainImage:
-          //                       'https://img.freepik.com/premium-vector/restaurant-logo-design-template_79169-56.jpg?w=2000',
-          //                   secondImage:
-          //                       'https://img.freepik.com/premium-vector/restaurant-logo-design-template_79169-56.jpg?w=2000',
-          //                   mainTitle: index == 0
-          //                       ? 'مطبخ الشام للفطائر الجاهزة '
-          //                       : 'من عدة مطاعم',
-          //                   time: 'يجب توصيله خلال 25 - 30 ',
-          //                   space: '5.2',
-          //                   rate: '22-05-2022   10:45 مساء',
-          //                   mainGreen: 'التوصيل مجانا',
-          //                   subGreen: 'لفترة محدودة',
-          //                   mainYellow: '45',
-          //                   subYellow: 'خصم على كل الطلبات',
-          //                   map: 'أبو مازن السوري',
-          //                   price: '78',
-          //                   onPressed: () {
-          //                     if (index == 0) {
-          //                       Get.to(OrderDetailsOne());
-          //                     } else {
-          //                       Get.to(OrderDetailsMulti());
-          //                     }
-          //                   }));
-          //         },
-          //         separatorBuilder: (context, index) {
-          //           return SizedBox(
-          //             height: 16.h,
-          //           );
-          //         },
-          //         itemCount: 2),
-          //     SizedBox(
-          //       height: 10.h,
-          //     ),
-          //     AppTextStyle(
-          //       name: 'الطلبات المكتملة',
-          //       fontSize: 12.sp,
-          //     ),
-          //     SizedBox(
-          //       height: 10.h,
-          //     ),
-          //     ListView.separated(
-          //         shrinkWrap: true,
-          //         physics: NeverScrollableScrollPhysics(),
-          //         itemBuilder: (context, index) {
-          //           return Container(
-          //               height: 60.h,
-          //               decoration: BoxDecoration(
-          //                 color: AppColors.greyF6,
-          //                 borderRadius:
-          //                     BorderRadius.circular(8.r),
-          //               ),
-          //               child: ContainerListDetailsDone(
-          //                   visible: true,
-          //                   mainImage:
-          //                       'https://img.freepik.com/premium-vector/restaurant-logo-design-template_79169-56.jpg?w=2000',
-          //                   secondImage:
-          //                       'https://img.freepik.com/premium-vector/restaurant-logo-design-template_79169-56.jpg?w=2000',
-          //                   mainTitle: index == 0
-          //                       ? 'مطبخ الشام للفطائر الجاهزة '
-          //                       : 'من عدة مطاعم',
-          //                   time: 'يجب توصيله خلال 25 - 30 ',
-          //                   space: '5.2',
-          //                   rate: '22-05-2022   10:45 مساء',
-          //                   mainGreen: 'التوصيل مجانا',
-          //                   subGreen: 'لفترة محدودة',
-          //                   mainYellow: '45',
-          //                   subYellow: 'خصم على كل الطلبات',
-          //                   map: 'أبو مازن السوري',
-          //                   price: '78',
-          //                   onPressed: () {}));
-          //         },
-          //         separatorBuilder: (context, index) {
-          //           return SizedBox(
-          //             height: 16.h,
-          //           );
-          //         },
-          //         itemCount: 3),
-          //     SizedBox(
-          //       height: 10.h,
-          //     ),
-          //     AppTextStyle(
-          //       name: 'موقعي الحالي',
-          //       fontSize: 12.sp,
-          //     ),
-          //     SizedBox(
-          //       height: 10.h,
-          //     ),
-          //     SizedBox(
-          //       height: 122.h,
-          //       child: Container(
-          //         clipBehavior: Clip.antiAliasWithSaveLayer,
-          //         height: 122.h,
-          //         decoration: BoxDecoration(
-          //             borderRadius: BorderRadius.circular(8.r)),
-          //         child: currentLocation == null
-          //             ? const Center(child: Text("Loading"))
-          //             : GoogleMap(
-          //                 myLocationEnabled: true,
-          //                 initialCameraPosition: CameraPosition(
-          //                   target: LatLng(
-          //                       currentLocation!.latitude!,
-          //                       currentLocation!.longitude!),
-          //                   zoom: 13.5,
-          //                 ),
-          //                 markers: {
-          //                   Marker(
-          //                     markerId: const MarkerId(
-          //                         "currentLocation"),
-          //                     position: LatLng(
-          //                         currentLocation!.latitude!,
-          //                         currentLocation!.longitude!),
-          //                   ),
-          //                   //  Marker(
-          //                   //   markerId: MarkerId("source"),
-          //                   //   position: latLng,
-          //                   // ),
-          //                   // const Marker(
-          //                   //   markerId: MarkerId("destination"),
-          //                   //   position: destination,
-          //                   // ),
-          //                 },
-          //                 onMapCreated: (mapController) {
-          //                   // _controller.complete(mapController); //  Marker(
-          //                   //   markerId: MarkerId("source"),
-          //                   //   position: latLng,
-          //                   // ),
-          //                   // const Marker(
-          //                   //   markerId: MarkerId("destination"),
-          //                   //   position: destination,
-          //                   // ),
-          //                 },
-          //               ),
-          //       ),
-          //     ),
-          //     CardTemplateBlack(
-          //       prefix: 'maps',
-          //       title:
-          //           '25 شارع عبدالسلام النابلسي، الصفة الغربية',
-          //       // colorFont: AppColors.black,
-          //       controller: TextEditingController(),
-          //     ),
-          //   ],
-          // );
-          //             });
-          //       } else {
-          //         return Text("No data ");
-          //       }
-          //     },
-          //   )
-          //   //
-          // ],
+      body: ListView(
+        // shrinkWrap: true,
+        // physics: NeverScrollableScrollPhysics(),
+        // padding: EdgeInsets.symmetric(vertical: 0.h),
+        children: [
+          SizedBox(
+            height: 10.h,
           ),
+          AppTextStyle(
+            name: 'الطلبات الحالية',
+            fontSize: 12.sp,
+          ),
+          SizedBox(
+            height: 10.h,
+          ),
+          FutureBuilder(
+            future: getData_paid(),
+            builder: (context, snapshot) {
+              if (snapshot.hasData) {
+                var data = snapshot.data as List;
+                //           print(data);
+                //           int i = data.length;
+                return Container(
+                  height: 250.h,
+                  child: ListView.builder(
+                      itemCount: data.length,
+                      shrinkWrap: true,
+                      // physics: NeverScrollableScrollPhysics(),
+                      scrollDirection: Axis.vertical,
+                      padding: EdgeInsets.symmetric(
+                          vertical: 20.h, horizontal: 16.w),
+                      itemBuilder: (context, index) {
+                        // return Text('${data[index]['clientName'].toString()}');
+                        // var res = getRes(data[index]['restaurantID'][0]);
+                        String image1 = " ";
+                        String image2 = " ";
+                        String resName = "";
+                        String dist = "";
+                        String date = "";
+                        // log(data[index]['restaurantID'][0]);
+
+                        getRes(data[index]['restaurantID'][0]);
+                        // log('sssssssssssssssssssssssssssss${res1[0]['images'][0].toString()}');
+                        image1 = res1[0]['images'][0];
+                        image2 = res1[0]['images'][1];
+                        resName = res1[0]['name'];
+                        double lat =
+                            double.parse(data[index]['postionCoordinates'][0]);
+                        double lot =
+                            double.parse(data[index]['postionCoordinates'][1]);
+                        dist = (calculateDistance(currentLocation?.latitude,
+                                currentLocation?.longitude, lat, lot))
+                            .toStringAsFixed(2);
+                        var dd = DateTime.parse(data[index]
+                                ['orderTimeLastUpdate']
+                            .toDate()
+                            .toString());
+                        dd = dd.add(new Duration(minutes: 30));
+                        date = dd.toString();
+                        // log(image);
+                        return Column(
+                          children: [
+                            //     ListView.separated(
+                            //         shrinkWrap: true,
+                            //         itemBuilder: (context, index) {
+                            Container(
+                                height: 70.h,
+                                decoration: BoxDecoration(
+                                  color: AppColors.greyF6,
+                                  borderRadius: BorderRadius.circular(8.r),
+                                ),
+                                child: ContainerListDetails(
+                                    visible: true,
+                                    mainImage: image1,
+                                    secondImage: image2,
+                                    mainTitle:
+                                        data[index]['restaurantID'].length == 1
+                                            ? resName
+                                            : 'من عدة مطاعم',
+                                    time: 'يجب توصيله خلال 25 - 30 ',
+                                    space: dist,
+                                    rate: date,
+                                    mainGreen: 'التوصيل مدفوع',
+                                    subGreen: 'لفترة محدودة',
+                                    mainYellow: '45',
+                                    subYellow: 'خصم على كل الطلبات',
+                                    map: 'أبو مازن السوري',
+                                    price: '78',
+                                    onPressed: () {
+                                      if (data[index]['restaurantID'].length ==
+                                          1) {
+                                        Get.to(OrderDetailsOne());
+                                      } else {
+                                        Get.to(OrderDetailsMulti());
+                                      }
+                                    })),
+                            //         SizedBox(
+                            // //       height: 10.h,
+                            // //     ),
+                            //         },
+                            //         separatorBuilder: (context, index) {
+                            //           return SizedBox(
+                            //             height: 16.h,
+                            //           );
+                            //         },
+                            //         itemCount: 2),
+                            SizedBox(
+                              height: 10.h,
+                            ),
+                          ],
+                        );
+                      }),
+                );
+              } else {
+                return Text("No data ");
+              }
+            },
+          ),
+          AppTextStyle(
+            name: 'الطلبات المكتملة',
+            fontSize: 12.sp,
+          ),
+          SizedBox(
+            height: 10.h,
+          ),
+          ListView.separated(
+              shrinkWrap: true,
+              physics: NeverScrollableScrollPhysics(),
+              itemBuilder: (context, index) {
+                return Container(
+                    height: 60.h,
+                    decoration: BoxDecoration(
+                      color: AppColors.greyF6,
+                      borderRadius: BorderRadius.circular(8.r),
+                    ),
+                    child: ContainerListDetailsDone(
+                        visible: true,
+                        mainImage:
+                            'https://img.freepik.com/premium-vector/restaurant-logo-design-template_79169-56.jpg?w=2000',
+                        secondImage:
+                            'https://img.freepik.com/premium-vector/restaurant-logo-design-template_79169-56.jpg?w=2000',
+                        mainTitle: index == 0
+                            ? 'مطبخ الشام للفطائر الجاهزة '
+                            : 'من عدة مطاعم',
+                        time: 'يجب توصيله خلال 25 - 30 ',
+                        space: '5.2',
+                        rate: '22-05-2022   10:45 مساء',
+                        mainGreen: 'التوصيل مجانا',
+                        subGreen: 'لفترة محدودة',
+                        mainYellow: '45',
+                        subYellow: 'خصم على كل الطلبات',
+                        map: 'أبو مازن السوري',
+                        price: '78',
+                        onPressed: () {}));
+              },
+              separatorBuilder: (context, index) {
+                return SizedBox(
+                  height: 16.h,
+                );
+              },
+              itemCount: 3),
+          SizedBox(
+            height: 10.h,
+          ),
+          AppTextStyle(
+            name: 'موقعي الحالي',
+            fontSize: 12.sp,
+          ),
+          SizedBox(
+            height: 10.h,
+          ),
+          SizedBox(
+            height: 122.h,
+            child: Container(
+              clipBehavior: Clip.antiAliasWithSaveLayer,
+              height: 122.h,
+              decoration:
+                  BoxDecoration(borderRadius: BorderRadius.circular(8.r)),
+              child: currentLocation == null
+                  ? const Center(child: Text("Loading"))
+                  : GoogleMap(
+                      myLocationEnabled: true,
+                      initialCameraPosition: CameraPosition(
+                        target: LatLng(currentLocation!.latitude!,
+                            currentLocation!.longitude!),
+                        zoom: 13.5,
+                      ),
+                      markers: {
+                        Marker(
+                          markerId: const MarkerId("currentLocation"),
+                          position: LatLng(currentLocation!.latitude!,
+                              currentLocation!.longitude!),
+                        ),
+                        //  Marker(
+                        //   markerId: MarkerId("source"),
+                        //   position: latLng,
+                        // ),
+                        // const Marker(
+                        //   markerId: MarkerId("destination"),
+                        //   position: destination,
+                        // ),
+                      },
+                      onMapCreated: (mapController) {
+                        // _controller.complete(mapController); //  Marker(
+                        //   markerId: MarkerId("source"),
+                        //   position: latLng,
+                        // ),
+                        // const Marker(
+                        //   markerId: MarkerId("destination"),
+                        //   position: destination,
+                        // ),
+                      },
+                    ),
+            ),
+          ),
+          CardTemplateBlack(
+            prefix: 'maps',
+            title: '25 شارع عبدالسلام النابلسي، الصفة الغربية',
+            // colorFont: AppColors.black,
+            controller: TextEditingController(),
+          ),
+          //
+        ],
+      ),
     );
   }
 }
